@@ -1,13 +1,17 @@
 import { NextRequest } from "next/server";
+import { generateSchema } from "@/lib/validators";
+import type { LandingContent } from "@/types/landing";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const ideaRaw = typeof body?.idea === "string" ? body.idea : "";
-  const idea = ideaRaw.trim();
-
+  const parsed = generateSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const idea = parsed.data.idea.trim();
   const topic = idea || "your product";
 
-  return Response.json({
+  const payload: LandingContent = {
     hero: {
       title: `Launch ${topic} faster with AI-built pages`,
       subtitle: `Describe ${topic} and get a conversion-ready landing page in seconds.`,
@@ -43,7 +47,9 @@ export async function POST(request: NextRequest) {
         features: ["Collaboration", "Brand presets", "Priority support"],
       },
     ],
-  });
+  };
+
+  return Response.json(payload);
 }
 
 
